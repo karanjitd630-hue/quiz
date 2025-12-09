@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Guess the Song – Lyrics Game</title>
+
+<style>
+  :root {
+    --molten-lava: #780000ff;
+    --brick-red: #c1121fff;
+    --papaya-whip: #fdf0d5ff;
+    --deep-space-blue: #003049ff;
+    --steel-blue: #669bbcff;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, var(--deep-space-blue), var(--steel-blue));
+    color: var(--papaya-whip);
+    text-align: center;
+    padding: 30px;
+  }
+
+  #game-box {
+    background: rgba(0, 48, 73, 0.6);
+    padding: 25px;
+    border-radius: 12px;
+    width: 80%;
+    margin: auto;
+    border: 2px solid var(--papaya-whip);
+  }
+
+  button {
+    background: var(--papaya-whip);
+    color: var(--deep-space-blue);
+    padding: 12px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 8px;
+    width: 80%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+  }
+
+  .correct {
+    background: var(--steel-blue) !important;
+    color: var(--papaya-whip) !important;
+  }
+
+  .wrong {
+    background: var(--molten-lava) !important;
+    color: var(--papaya-whip) !important;
+  }
+
+  #nextBtn {
+    background: var(--brick-red) !important;
+    color: var(--papaya-whip) !important;
+    font-weight: bold;
+  }
+</style>
+</head>
+
+<body>
+  <h1>🎶 Guess the Song From the Lyrics 🎶</h1>
+
+  <!-- AUDIO FILES (LOCAL FILES FROM /audio FOLDER) -->
+  <audio id="breathAudio" src="audio/breath.mp3"></audio>
+  <audio id="imagineAudio" src="audio/imagine.mp3"></audio>
+
+  <div id="game-box">
+    <h2 id="lyric"></h2>
+    <h3 id="artist"></h3>
+    <div id="options"></div>
+
+    <button id="nextBtn" style="display:none;">
+      Next Question →
+    </button>
+  </div>
+
+  <script>
+    /* Utility: Shuffle array */
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    /* Play audio snippet */
+    function playSnippet(audioId, start, duration) {
+      const audio = document.getElementById(audioId);
+      audio.currentTime = start;
+      audio.play();
+
+      setTimeout(() => {
+        audio.pause();
+      }, duration * 1000);
+    }
+
+    /* Song Database */
+    const songs = [
+      {
+        lyric: "Since you are gone I have been lost without a trace… I dream and can only see your face",
+        answer: "Every Breath You Take",
+        artist: "The Police",
+        options: ["Every Breath You Take", "Roxanne", "Message in a Bottle", "Don't Stand So Close to Me"],
+        audioId: "breathAudio",
+        startTime: 63,
+        playDuration: 10
+      },
+
+      {
+        lyric: "You may say I'm a dreamer, but I'm not the only one…",
+        answer: "Imagine",
+        artist: "John Lennon",
+        options: ["Imagine", "Jealous Guy", "Woman", "Mind Games"],
+        audioId: "imagineAudio",
+        startTime: 0,
+        playDuration: 10
+      }
+    ];
+
+    let used = [];
+    let current;
+    let score = 0;
+
+    function startGame() {
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      document.getElementById("nextBtn").style.display = "none";
+
+      if (used.length === songs.length) {
+        endGame();
+        return;
+      }
+
+      const index = Math.floor(Math.random() * songs.length);
+      if (used.includes(index)) return nextQuestion();
+      used.push(index);
+
+      current = songs[index];
+
+      document.getElementById("lyric").innerText = "“" + current.lyric + "”";
+      document.getElementById("artist").innerText = "Artist: " + current.artist;
+
+      const mixed = shuffle([...current.options]);
+      const optionsBox = document.getElementById("options");
+      optionsBox.innerHTML = "";
+
+      mixed.forEach(op => {
+        let btn = document.createElement("button");
+        btn.textContent = op;
+        btn.addEventListener("click", () => checkAnswer(btn, op));
+        optionsBox.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(button, selected) {
+      const allButtons = document.querySelectorAll("#options button");
+      allButtons.forEach(btn => btn.disabled = true);
+
+      if (selected === current.answer) {
+        button.classList.add("correct");
+        score++;
+      } else {
+        button.classList.add("wrong");
+        allButtons.forEach(btn => {
+          if (btn.innerText === current.answer) {
+            btn.classList.add("correct");
+          }
+        });
+      }
+
+      if (current.audioId) {
+        playSnippet(current.audioId, current.startTime, current.playDuration);
+      }
+
+      document.getElementById("nextBtn").style.display = "block";
+    }
+
+    document.getElementById("nextBtn").addEventListener("click", nextQuestion);
+
+    function endGame() {
+      document.getElementById("lyric").innerText = "🎉 Quiz Complete!";
+      document.getElementById("artist").innerHTML =
+        `Your Score: <b>${score}/${songs.length}</b>`;
+      document.getElementById("options").innerHTML = "";
+      document.getElementById("nextBtn").style.display = "none";
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
